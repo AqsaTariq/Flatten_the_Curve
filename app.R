@@ -115,6 +115,11 @@ run <- function(sdp, red, r0) {
     # Combine the two solutions into one dataset
     ode_df <- rbind(ode_solution_daily, ode_solution2_daily)
     
+}
+
+
+plot_result <- function(ode_df, sdp) {    
+    
     # The final size in the two cases:
     final_sizes <- ode_df %>%
             group_by(type) %>%
@@ -268,11 +273,17 @@ ui <- fluidPage(
 
 
 server <- function(input, output) {
-
-    output$chart <- renderPlot({
+    
+    
+    res <- reactive({
         run(sdp = c(input$sdp), 
             red = c(input$red.one, input$red.two), 
             r0  = input$r0)
+    })
+    
+
+    output$chart <- renderPlot({
+        plot_result(res(), input$sdp )
     })
 }
 
