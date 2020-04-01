@@ -41,9 +41,13 @@ sir <- function(t, y, parms,
 
 
 ## we assume that many globals exist...!
-solve_ode <- function(sdp, red, typ, beta) {
+solve_ode <- function(sdp, red, typ, beta, max_time) {
+    
+    # Grid where to evaluate
+    times <- reactive({ seq(0, max_time, by = 0.1) })
+    
     ode_solution <- lsoda(y = c(N - n_init, n_init), 
-                          times = times, 
+                          times = times(), 
                           func  = sir, 
                           parms = c(beta, gamma), 
                           social_dist_period = sdp,
@@ -80,9 +84,9 @@ gamma <- 1/5
 # Initial number of infected people
 n_init <- 10
 
-# Grid where to evaluate
-max_time <- 365 # 150
-times <- seq(0, max_time, by = 0.1)
+# # Grid where to evaluate
+# max_time <- 365 # 150
+# times <- seq(0, max_time, by = 0.1)
 
 # calculate beta
 # Infectious contact rate - beta = R0/N*gamma and when R0  ~2.25 then  2.25/N*gamma
@@ -92,16 +96,17 @@ times <- seq(0, max_time, by = 0.1)
 
 
 # add results with intervention and plot
-run <- function(sdp, red, r0) {
+run <- function(sdp, red, r0, max_time) {
     
     beta <- r0 / N * gamma
-    
+
     
     ode_solution_daily <- solve_ode(
-        sdp = c(0, max_time),     # social_dist_period
-        red = c(0.9999, 0.9999),  # reduction
+        sdp = c(0, max_time),  # social_dist_period
+        red = c(1, 1),         # reduction
         typ = "without", 
-        beta = beta
+        beta = beta, 
+        max_time
     )
     
     # solve with interventions
@@ -109,7 +114,8 @@ run <- function(sdp, red, r0) {
         sdp = sdp,
         red = red,
         typ = "with", 
-        beta = beta
+        beta = beta, 
+        max_time
     )
     
     # Combine the two solutions into one dataset
@@ -118,7 +124,7 @@ run <- function(sdp, red, r0) {
 }
 
 
-plot_result <- function(ode_df, sdp) {    
+plot_result <- function(ode_df, sdp, max_time) {    
     
     # The final size in the two cases:
     final_sizes <- ode_df %>%
@@ -216,27 +222,33 @@ ui <- fluidPage(
     sidebarLayout(
         sidebarPanel(
             sliderInput("r0", 
-                        div(HTML("Choose a value for R<sub>0</sub>")), 
+                        div(HTML("Value for R<sub>0</sub>")), 
                         min   = 1.5, 
                         max   = 3.0, 
                         value = 2.25, 
                         step  = 0.25),
+            sliderInput("x_max", 
+                        "Max days for the model", 
+                        min   = 100, 
+                        max   = 365, 
+                        value = 150,
+                        step  =  25),
             hr(),
             br(),
             sliderInput("sdp",
-                        "Choose the first 'social distance period' (sdp 1)",
+                        "First 'social distance period' (sdp 1)",
                         min   =   0,
                         max   = 150,
                         value = c(30, 60), 
                         step  =   5), 
             br(), br(),
-            sliderInput("red.one",
+            sliderInput("red_one",
                         "Reduction during first period (sdp 1)",
                         min   = 0.2,
                         max   = 1.0,
                         value = 0.6, 
                         step  = 0.05), 
-            sliderInput("red.two",
+            sliderInput("red_two",
                         "Reduction after first period (sdp 2)",
                         min   = 0.2,
                         max   = 1.0,
@@ -277,13 +289,14 @@ server <- function(input, output) {
     
     res <- reactive({
         run(sdp = c(input$sdp), 
-            red = c(input$red.one, input$red.two), 
-            r0  = input$r0)
+            red = c(input$red_one, input$red_two), 
+            r0  = input$r0, 
+            max_time = input$x_max)
     })
     
 
     output$chart <- renderPlot({
-        plot_result(res(), input$sdp )
+        plot_result(res(), input$sdp, input$x_max )
     })
 }
 
