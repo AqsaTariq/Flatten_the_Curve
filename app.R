@@ -99,7 +99,7 @@ n_init <- 10
 run <- function(sdp, red, r0, max_time) {
     
     beta <- r0 / N * gamma
-
+    
     
     ode_solution_daily <- solve_ode(
         sdp = c(0, max_time),  # social_dist_period
@@ -128,11 +128,11 @@ plot_result <- function(ode_df, sdp, max_time) {
     
     # The final size in the two cases:
     final_sizes <- ode_df %>%
-            group_by(type) %>%
-            filter(row_number() == n()) %>%
-            mutate("final fraction" = scales::percent(1 - s, accuracy = 1)) %>%
-            select("final fraction", interventions = type) %>% 
-            arrange(desc(interventions))
+        group_by(type) %>%
+        filter(row_number() == n()) %>%
+        mutate("final fraction" = scales::percent(1 - s, accuracy = 1)) %>%
+        select("final fraction", interventions = type) %>% 
+        arrange(desc(interventions))
     
     # Plot
     y_max <- 0.09
@@ -181,23 +181,23 @@ plot_result <- function(ode_df, sdp, max_time) {
                   vjust = 0,
                   color = col_sdp) +   
         geom_segment(aes(
-                x = sdp[1],
-                y = y_arrow, 
-                xend = sdp[2] * 0.99, # shorten
-                yend = y_arrow
-            ),
-            size = 0.3, 
-            color = col_sdp,
-            arrow = arrow(length = unit(2, "mm"))) +
+            x = sdp[1],
+            y = y_arrow, 
+            xend = sdp[2] * 0.99, # shorten
+            yend = y_arrow
+        ),
+        size = 0.3, 
+        color = col_sdp,
+        arrow = arrow(length = unit(2, "mm"))) +
         geom_segment(aes(
-                x = sdp[2]*1.01, # shorten
-                y = y_arrow, 
-                xend = max_time,
-                yend = y_arrow
-            ),
-            size = 0.3, 
-            color = col_sdp,
-            arrow = arrow(length = unit(2, "mm")))  +
+            x = sdp[2]*1.01, # shorten
+            y = y_arrow, 
+            xend = max_time,
+            yend = y_arrow
+        ),
+        size = 0.3, 
+        color = col_sdp,
+        arrow = arrow(length = unit(2, "mm")))  +
         # Add final size as table
         annotation_custom(tableGrob(final_sizes, 
                                     rows = NULL,
@@ -209,7 +209,7 @@ plot_result <- function(ode_df, sdp, max_time) {
                           xmax = max_time,
                           ymin = y_max * 0.7,
                           ymax = y_max * 0.9
-                          )
+        )
     
     print(pp)
 }
@@ -268,7 +268,7 @@ ui <- fluidPage(
             img(src="license.png"),
             br()
         ),
-
+        
         mainPanel(
             # p("Note: This tool is not intended to create a prediction."),
             plotOutput("chart", height = "500px"), 
@@ -294,7 +294,7 @@ server <- function(input, output) {
             max_time = input$x_max)
     })
     
-
+    
     output$chart <- renderPlot({
         plot_result(res(), input$sdp, input$x_max )
     })
