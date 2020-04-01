@@ -10,6 +10,34 @@ library(deSolve)
 theme_set(theme_minimal(base_size = 18))
 
 
+## CONSTANTS
+
+# Population size 
+N <- 1e6 
+
+# Rate at which person stays in the infectious compartment (disease specific and tracing specific)
+gamma <- 1/5 
+
+# Initial number of infected people
+n_init <- 10
+
+
+
+# # Grid where to evaluate
+# max_time <- 365 # 150
+# times <- seq(0, max_time, by = 0.1)
+
+# R0 for the beta and gamma values
+# R0 <- beta*N/gamma
+
+# calculate beta
+# Infectious contact rate - beta = R0/N*gamma and when R0  ~2.25 then  2.25/N*gamma
+# beta <- 4.5e-07 
+
+
+
+
+
 # Function to compute the derivative of the ODE system
 # -----------------------------------------------------------
 #  t - time
@@ -40,7 +68,7 @@ sir <- function(t, y, parms,
 }
 
 
-## we assume that many globals exist...!
+## we assume that some globals exist...
 solve_ode <- function(sdp, red, typ, beta, max_time) {
     
     # Grid where to evaluate
@@ -70,28 +98,6 @@ solve_ode <- function(sdp, red, typ, beta, max_time) {
 }
 
 
-## CONSTANTS
-
-# Population size 
-N <- 1e6 
-
-# Rate at which person stays in the infectious compartment (disease specific and tracing specific)
-gamma <- 1/5 
-
-# R0 for the beta and gamma values
-# R0 <- beta*N/gamma
-
-# Initial number of infected people
-n_init <- 10
-
-# # Grid where to evaluate
-# max_time <- 365 # 150
-# times <- seq(0, max_time, by = 0.1)
-
-# calculate beta
-# Infectious contact rate - beta = R0/N*gamma and when R0  ~2.25 then  2.25/N*gamma
-# beta <- 4.5e-07 
-
 
 
 
@@ -99,7 +105,6 @@ n_init <- 10
 run <- function(sdp, red, r0, max_time) {
     
     beta <- r0 / N * gamma
-    
     
     ode_solution_daily <- solve_ode(
         sdp = c(0, max_time),  # social_dist_period
@@ -124,7 +129,7 @@ run <- function(sdp, red, r0, max_time) {
 }
 
 
-plot_result <- function(ode_df, sdp, max_time) {    
+plot_result <- function(ode_df, sdp, max_time, y_axis_fixed) {    
     
     # The final size in the two cases:
     final_sizes <- ode_df %>%
@@ -135,9 +140,13 @@ plot_result <- function(ode_df, sdp, max_time) {
         arrange(desc(interventions))
     
     # Plot
-    y_max <- 0.09
-    y_arrow <- y_max * 0.95
-    y_text  <- y_arrow + 0.001
+    if (y_axis_fixed) {
+        y_max <- 0.09
+    } else {
+        y_max <- max(ode_df$c, na.rm = TRUE) * 1.05
+    }
+    y_arrow <- y_max * 0.975
+    y_text  <- y_arrow + y_max * 0.01 
     col_sdp <- "lightblue3"
     
     x_labs <- sort(c(0, 100, 200, 300, 365, sdp))
@@ -227,6 +236,10 @@ ui <- fluidPage(
                         max   = 3.0, 
                         value = 2.25, 
                         step  = 0.25),
+            checkboxInput("y_axis_fixed",
+                          div(HTML("Fix y axis (helpful to compare different R<sub>0</sub>)")),
+                          value = FALSE),
+            br(),
             sliderInput("x_max", 
                         "Max days for the model", 
                         min   = 100, 
@@ -299,7 +312,7 @@ server <- function(input, output) {
     
     
     output$chart <- renderPlot({
-        plot_result(res(), input$sdp, input$x_max )
+        plot_result(res(), input$sdp, input$x_max, input$y_axis_fixed )
     })
 }
 
