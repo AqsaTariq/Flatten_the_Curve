@@ -1,4 +1,13 @@
 
+#
+# Initial code, mathematical model and idea:
+# Michael Höhle, 'Flatten the COVID-19 curve', Mar 16, 2020
+# https://staff.math.su.se/hoehle/blog/2020/03/16/flatteningthecurve.html
+#       
+
+
+
+
 
 library(shiny)
 library(gridExtra)
